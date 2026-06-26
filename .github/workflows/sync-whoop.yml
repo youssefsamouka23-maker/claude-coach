@@ -1,0 +1,50 @@
+name: Sync WHOOP data
+
+on:
+  schedule:
+    # Runs server-side in GitHub Actions, never in the browser.
+    # Times are UTC. Covers roughly 6:30am-1:30pm in France (CET/CEST).
+    - cron: "30 5 * * *"
+    - cron: "30 8 * * *"
+    - cron: "30 11 * * *"
+  workflow_dispatch: {}
+
+permissions:
+  contents: write
+
+concurrency:
+  group: sync-whoop
+  cancel-in-progress: false
+
+jobs:
+  sync:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup Node
+        uses: actions/setup-node@v4
+        with:
+          node-version: "20"
+
+      - name: Fetch WHOOP data, encrypt, write snapshot
+        env:
+          WHOOP_CLIENT_ID: ${{ secrets.WHOOP_CLIENT_ID }}
+          WHOOP_CLIENT_SECRET: ${{ secrets.WHOOP_CLIENT_SECRET }}
+          WHOOP_REFRESH_TOKEN: ${{ secrets.WHOOP_REFRESH_TOKEN }}
+          DATA_PASSPHRASE: ${{ secrets.DATA_PASSPHRASE }}
+          GH_TOKEN: ${{ secrets.REPO_ADMIN_TOKEN }}
+        run: node scripts/sync-whoop.mjs
+
+      - name: Commit updated snapshot
+        run: |
+          git config user.name "claude-coach-bot"
+          git config user.email "actions@users.noreply.github.com"
+          git add data/whoop-latest.enc.json
+          if git diff --cached --quiet; then
+            echo "No data changes to commit."
+          else
+            git commit -m "chore: sync WHOOP data $(date -u +%Y-%m-%dT%H:%M:%SZ)"
+            git push
+          fi

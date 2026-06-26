@@ -1,0 +1,8 @@
+{
+  "name": "Claude Coach",
+  "short_name": "Coach",
+  "start_url": "./index.html",
+  "display": "standalone",
+  "background_color": "#0c0c0e",
+  "theme_color": "#0c0c0e"
+}
