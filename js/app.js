@@ -1,4 +1,4 @@
-import { PROGRAM, DAY_ORDER, DAY_LABELS, nextDayType } from "./program.js?v=20260626d";
+import { PROGRAM, DAY_ORDER, DAY_LABELS, nextDayType } from "./program.js?v=20260626e";
 import {
   getSettings,
   saveSettings,
@@ -7,11 +7,11 @@ import {
   getLastSessionForDayType,
   getExerciseHistory,
   listAllExerciseNames,
-} from "./storage.js?v=20260626d";
-import { loadWhoopData, latestRecovery, latestSleep, latestCycle, recentWorkouts } from "./whoop.js?v=20260626d";
-import { recoveryRingSVG, strainGaugeSVG, sleepBreakdownHTML } from "./widgets.js?v=20260626d";
-import { buildCoachingPrompt, askCoach } from "./coach.js?v=20260626d";
-import { icon, icons } from "./icons.js?v=20260626d";
+} from "./storage.js?v=20260626e";
+import { loadWhoopData, latestRecovery, latestSleep, latestCycle, recentWorkouts } from "./whoop.js?v=20260626e";
+import { recoveryRingSVG, strainGaugeSVG, sleepBreakdownHTML } from "./widgets.js?v=20260626e";
+import { buildCoachingPrompt, askCoach } from "./coach.js?v=20260626e";
+import { icon, icons } from "./icons.js?v=20260626e";
 
 const state = {
   whoopData: null,
@@ -258,7 +258,7 @@ function renderDashboard() {
         <div class="card-title">${icon("flame")} Strain</div>
         <span class="muted small">last cycle</span>
       </div>
-      ${strainGaugeSVG(cycle?.strain)}
+      <div class="center">${strainGaugeSVG(cycle?.strain)}</div>
     </div>
 
     <div class="card">
