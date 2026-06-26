@@ -2,14 +2,14 @@
 // Small SVG widgets: recovery ring, sleep breakdown bar, strain gauge.
 
 function recoveryColor(score) {
-  if (score == null) return "#555";
-  if (score >= 67) return "#16c172";
+  if (score == null) return "#3a3a42";
+  if (score >= 67) return "#18cc7a";
   if (score >= 34) return "#f2c14e";
-  return "#e3463e";
+  return "#ff5d54";
 }
 
-export function recoveryRingSVG(score, size = 160) {
-  const r = size / 2 - 12;
+export function recoveryRingSVG(score, size = 168) {
+  const r = size / 2 - 13;
   const c = size / 2;
   const circumference = 2 * Math.PI * r;
   const pct = score == null ? 0 : Math.max(0, Math.min(100, score));
@@ -17,12 +17,12 @@ export function recoveryRingSVG(score, size = 160) {
   const color = recoveryColor(score);
   return `
   <svg viewBox="0 0 ${size} ${size}" width="${size}" height="${size}">
-    <circle cx="${c}" cy="${c}" r="${r}" fill="none" stroke="#26262b" stroke-width="12"/>
-    <circle cx="${c}" cy="${c}" r="${r}" fill="none" stroke="${color}" stroke-width="12"
+    <circle cx="${c}" cy="${c}" r="${r}" fill="none" stroke="#24242b" stroke-width="13"/>
+    <circle cx="${c}" cy="${c}" r="${r}" fill="none" stroke="${color}" stroke-width="13"
       stroke-linecap="round" stroke-dasharray="${circumference}" stroke-dashoffset="${offset}"
-      transform="rotate(-90 ${c} ${c})"/>
-    <text x="${c}" y="${c - 4}" text-anchor="middle" font-size="34" font-weight="700" fill="#f5f5f7">${score != null ? Math.ceil(score) : "--"}</text>
-    <text x="${c}" y="${c + 22}" text-anchor="middle" font-size="12" fill="#9a9aa2" letter-spacing="1">RECOVERY</text>
+      transform="rotate(-90 ${c} ${c})" style="transition: stroke-dashoffset 0.6s cubic-bezier(.4,0,.2,1);"/>
+    <text x="${c}" y="${c - 2}" text-anchor="middle" font-size="38" font-weight="700" fill="#f5f5f7">${score != null ? Math.ceil(score) : "--"}</text>
+    <text x="${c}" y="${c + 24}" text-anchor="middle" font-size="11.5" font-weight="600" fill="#6e6e78" letter-spacing="1.5">RECOVERY</text>
   </svg>`;
 }
 
@@ -42,30 +42,32 @@ export function strainGaugeSVG(strain, size = 160) {
   const bgX2 = c + r * Math.cos(2 * Math.PI);
   const bgY2 = c + r * Math.sin(2 * Math.PI);
 
-  let color = "#2c9bf0";
-  if (strain >= 14) color = "#f2841e";
-  if (strain >= 18) color = "#e3463e";
+  let color = "#4aa8f5";
+  if (strain >= 14) color = "#f2c14e";
+  if (strain >= 18) color = "#ff5d54";
 
   return `
   <svg viewBox="0 0 ${size} ${size / 1.7}" width="${size}" height="${size / 1.7}">
-    <path d="M ${c - r} ${c} A ${r} ${r} 0 0 1 ${bgX2} ${bgY2}" fill="none" stroke="#26262b" stroke-width="12" stroke-linecap="round"/>
+    <path d="M ${c - r} ${c} A ${r} ${r} 0 0 1 ${bgX2} ${bgY2}" fill="none" stroke="#24242b" stroke-width="13" stroke-linecap="round"/>
     ${
       pct > 0
-        ? `<path d="M ${x1} ${y1} A ${r} ${r} 0 ${largeArc} 1 ${x2} ${y2}" fill="none" stroke="${color}" stroke-width="12" stroke-linecap="round"/>`
+        ? `<path d="M ${x1} ${y1} A ${r} ${r} 0 ${largeArc} 1 ${x2} ${y2}" fill="none" stroke="${color}" stroke-width="13" stroke-linecap="round"/>`
         : ""
     }
-    <text x="${c}" y="${c - 6}" text-anchor="middle" font-size="28" font-weight="700" fill="#f5f5f7">${strain != null ? strain.toFixed(1) : "--"}</text>
-    <text x="${c}" y="${c + 14}" text-anchor="middle" font-size="11" fill="#9a9aa2" letter-spacing="1">STRAIN</text>
+    <text x="${c}" y="${c - 6}" text-anchor="middle" font-size="29" font-weight="700" fill="#f5f5f7">${strain != null ? strain.toFixed(1) : "--"}</text>
+    <text x="${c}" y="${c + 13}" text-anchor="middle" font-size="11" font-weight="600" fill="#6e6e78" letter-spacing="1.5">STRAIN</text>
   </svg>`;
 }
 
 export function sleepBreakdownHTML(sleep) {
-  if (!sleep) return `<p class="muted">No sleep data yet.</p>`;
+  if (!sleep) {
+    return `<div class="empty-state" style="padding:var(--sp-4) 0;"><div class="empty-title">No sleep data yet</div><div class="empty-sub">Sync from WHOOP to see last night's breakdown.</div></div>`;
+  }
   const segments = [
-    { label: "Light", hrs: sleep.light_hrs, color: "#4f8cf0" },
-    { label: "Deep", hrs: sleep.deep_hrs, color: "#2848a8" },
-    { label: "REM", hrs: sleep.rem_hrs, color: "#8e6bf0" },
-    { label: "Awake", hrs: sleep.awake_hrs, color: "#5a5a62" },
+    { label: "Light", hrs: sleep.light_hrs, color: "#4aa8f5" },
+    { label: "Deep", hrs: sleep.deep_hrs, color: "#2e5fb8" },
+    { label: "REM", hrs: sleep.rem_hrs, color: "#9b7bf0" },
+    { label: "Awake", hrs: sleep.awake_hrs, color: "#4a4a52" },
   ];
   const total = segments.reduce((s, x) => s + (x.hrs || 0), 0) || 1;
   const bar = segments
