@@ -71,6 +71,19 @@ select, input {
   margin-top: 6px;
 }
 
+.pw-row { display: flex; align-items: center; gap: 8px; }
+.pw-row input { flex: 1; }
+.show-toggle {
+  margin-top: 6px;
+  background: #1c1c21;
+  border: 1px solid #2a2a30;
+  color: #c8c8cf;
+  border-radius: 10px;
+  padding: 10px 12px;
+  font-size: 13px;
+  white-space: nowrap;
+}
+
 .exercise-block {
   background: #16161a;
   border: 1px solid #1f1f24;

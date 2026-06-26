@@ -304,20 +304,35 @@ async function runCoach() {
 function renderSettings() {
   const root = $("#tab-settings");
   const s = getSettings();
+  const noAssistAttrs = `autocomplete="off" autocapitalize="none" autocorrect="off" spellcheck="false"`;
   root.innerHTML = `
     <div class="card">
       <div class="card-title">Data Passphrase</div>
       <p class="muted small">Decrypts the WHOOP snapshot synced by GitHub Actions. Set once, stored only on this device.</p>
-      <input id="passphrase-input" type="password" placeholder="Passphrase" value="${s.dataPassphrase ?? ""}" />
+      <div class="pw-row">
+        <input id="passphrase-input" type="password" placeholder="Passphrase" value="${s.dataPassphrase ?? ""}" ${noAssistAttrs} />
+        <button type="button" class="show-toggle" data-target="passphrase-input">show</button>
+      </div>
     </div>
     <div class="card">
       <div class="card-title">Anthropic API Key</div>
       <p class="muted small">Used to call Claude directly from this browser. Stored only on this device.</p>
-      <input id="apikey-input" type="password" placeholder="sk-ant-..." value="${s.anthropicApiKey ?? ""}" />
+      <div class="pw-row">
+        <input id="apikey-input" type="password" placeholder="sk-ant-..." value="${s.anthropicApiKey ?? ""}" ${noAssistAttrs} />
+        <button type="button" class="show-toggle" data-target="apikey-input">show</button>
+      </div>
     </div>
     <button id="save-settings-btn" class="primary-btn">Save Settings</button>
     <div id="settings-status" class="muted small center"></div>
   `;
+  $$(".show-toggle").forEach((btn) => {
+    btn.addEventListener("click", () => {
+      const input = document.getElementById(btn.dataset.target);
+      const isPw = input.type === "password";
+      input.type = isPw ? "text" : "password";
+      btn.textContent = isPw ? "hide" : "show";
+    });
+  });
   $("#save-settings-btn").addEventListener("click", async () => {
     saveSettings({
       dataPassphrase: $("#passphrase-input").value,

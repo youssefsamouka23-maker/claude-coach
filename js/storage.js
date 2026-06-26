@@ -19,7 +19,14 @@ export function getSettings() {
 
 export function saveSettings(partial) {
   const current = getSettings();
-  const next = { ...current, ...partial };
+  // Trim whitespace — mobile keyboards (autocapitalize/autocorrect/autofill)
+  // can silently add leading/trailing spaces, which breaks the passphrase
+  // derivation (AES-GCM auth tag check fails -> "operation-specific" error).
+  const cleaned = {};
+  for (const [k, v] of Object.entries(partial)) {
+    cleaned[k] = typeof v === "string" ? v.trim() : v;
+  }
+  const next = { ...current, ...cleaned };
   localStorage.setItem(KEYS.settings, JSON.stringify(next));
   return next;
 }
