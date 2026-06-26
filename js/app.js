@@ -1,4 +1,4 @@
-import { PROGRAM, DAY_ORDER, DAY_LABELS, nextDayType } from "./program.js";
+import { PROGRAM, DAY_ORDER, DAY_LABELS, nextDayType } from "./program.js?v=20260626c";
 import {
   getSettings,
   saveSettings,
@@ -7,10 +7,10 @@ import {
   getLastSessionForDayType,
   getExerciseHistory,
   listAllExerciseNames,
-} from "./storage.js";
-import { loadWhoopData, latestRecovery, latestSleep, latestCycle, recentWorkouts } from "./whoop.js";
-import { recoveryRingSVG, strainGaugeSVG, sleepBreakdownHTML } from "./widgets.js";
-import { buildCoachingPrompt, askCoach } from "./coach.js";
+} from "./storage.js?v=20260626c";
+import { loadWhoopData, latestRecovery, latestSleep, latestCycle, recentWorkouts } from "./whoop.js?v=20260626c";
+import { recoveryRingSVG, strainGaugeSVG, sleepBreakdownHTML } from "./widgets.js?v=20260626c";
+import { buildCoachingPrompt, askCoach } from "./coach.js?v=20260626c";
 
 const state = {
   whoopData: null,

@@ -1,5 +1,5 @@
 // js/whoop.js
-import { decryptWhoopBlob } from "./crypto.js";
+import { decryptWhoopBlob } from "./crypto.js?v=20260626c";
 
 let cached = null;
 
