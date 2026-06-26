@@ -21,7 +21,7 @@ export function recoveryRingSVG(score, size = 160) {
     <circle cx="${c}" cy="${c}" r="${r}" fill="none" stroke="${color}" stroke-width="12"
       stroke-linecap="round" stroke-dasharray="${circumference}" stroke-dashoffset="${offset}"
       transform="rotate(-90 ${c} ${c})"/>
-    <text x="${c}" y="${c - 4}" text-anchor="middle" font-size="34" font-weight="700" fill="#f5f5f7">${score ?? "--"}</text>
+    <text x="${c}" y="${c - 4}" text-anchor="middle" font-size="34" font-weight="700" fill="#f5f5f7">${score != null ? Math.ceil(score) : "--"}</text>
     <text x="${c}" y="${c + 22}" text-anchor="middle" font-size="12" fill="#9a9aa2" letter-spacing="1">RECOVERY</text>
   </svg>`;
 }
@@ -84,8 +84,8 @@ export function sleepBreakdownHTML(sleep) {
     <div class="sleep-bar">${bar}</div>
     <div class="legend">${legend}</div>
     <div class="sleep-stats">
-      <span>${sleep.performance_pct ?? "--"}% performance</span>
+      <span>${sleep.performance_pct != null ? Math.ceil(sleep.performance_pct) : "--"}% performance</span>
       <span>${total.toFixed(1)}h total</span>
-      <span>${sleep.efficiency_pct ?? "--"}% efficiency</span>
+      <span>${sleep.efficiency_pct != null ? Math.ceil(sleep.efficiency_pct) : "--"}% efficiency</span>
     </div>`;
 }

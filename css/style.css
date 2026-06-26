@@ -21,6 +21,7 @@ main {
   padding: 12px 12px 90px;
   max-width: 480px;
   margin: 0 auto;
+  overflow-x: hidden;
 }
 
 .tab-panel { display: none; }
@@ -71,8 +72,8 @@ select, input {
   margin-top: 6px;
 }
 
-.pw-row { display: flex; align-items: center; gap: 8px; }
-.pw-row input { flex: 1; }
+.pw-row { display: flex; align-items: center; gap: 8px; width: 100%; }
+.pw-row input { flex: 1 1 auto; min-width: 0; width: 0; }
 .show-toggle {
   margin-top: 6px;
   background: #1c1c21;
@@ -93,10 +94,17 @@ select, input {
 }
 .exercise-name { font-weight: 600; font-size: 15px; }
 .sets { margin-top: 10px; display: flex; flex-direction: column; gap: 6px; }
-.set-row { display: flex; align-items: center; gap: 8px; }
-.set-num { width: 18px; color: #9a9aa2; font-size: 13px; }
-.weight-input, .reps-input { width: auto; flex: 1; text-align: center; margin-top: 0; }
-.x { color: #9a9aa2; }
+.set-row { display: flex; align-items: center; gap: 6px; width: 100%; }
+.set-num { flex: 0 0 16px; color: #9a9aa2; font-size: 13px; }
+.weight-input, .reps-input {
+  width: 0; /* with flex:1, forces equal shrink instead of intrinsic input min-width */
+  min-width: 0;
+  flex: 1 1 auto;
+  text-align: center;
+  margin-top: 0;
+  padding: 10px 6px;
+}
+.x { flex: 0 0 auto; color: #9a9aa2; }
 
 .primary-btn {
   width: 100%;
