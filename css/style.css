@@ -411,6 +411,36 @@ input:focus, select:focus { border-color: var(--accent); }
   transition: border-color var(--dur-2) var(--ease);
 }
 .exercise-block.done { border-color: rgba(24, 204, 122, 0.4); }
+
+.superset-wrap {
+  background: var(--surface-1);
+  border: 1px solid var(--violet);
+  border-radius: var(--r-lg);
+  padding: var(--sp-3) var(--sp-4) var(--sp-1);
+  margin-bottom: var(--sp-3);
+}
+.superset-label {
+  display: flex;
+  align-items: center;
+  gap: 5px;
+  font-size: 10px;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.6px;
+  color: var(--violet);
+  margin-bottom: var(--sp-2);
+}
+.superset-label .icon { width: 11px; height: 11px; }
+.superset-wrap .exercise-block.nested {
+  background: none;
+  border: none;
+  border-radius: 0;
+  padding: var(--sp-2) 0;
+  margin-bottom: 0;
+}
+.superset-wrap .exercise-block.nested + .exercise-block.nested {
+  border-top: 1px dashed var(--border);
+}
 .exercise-head { display: flex; align-items: flex-start; justify-content: space-between; gap: var(--sp-2); }
 .exercise-name { font-weight: 600; font-size: var(--fs-md); }
 .exercise-meta { display: flex; align-items: center; gap: 6px; margin-top: 2px; }
@@ -523,6 +553,31 @@ canvas { max-width: 100%; }
 .bubble-meta .icon { width: 13px; height: 13px; color: var(--accent); }
 .bubble-text { font-size: var(--fs-md); line-height: 1.55; white-space: pre-wrap; }
 .bubble-text strong { color: var(--text-1); font-weight: 700; }
+
+.coach-shell { display: flex; flex-direction: column; gap: var(--sp-3); }
+.coach-thread { display: flex; flex-direction: column; gap: var(--sp-2); }
+.bubble.user {
+  background: var(--accent-soft);
+  border-color: rgba(24, 204, 122, 0.3);
+  margin-left: var(--sp-5);
+}
+.bubble.user .bubble-text { color: var(--text-1); }
+.coach-input-row {
+  display: flex;
+  align-items: center;
+  gap: var(--sp-2);
+  position: sticky;
+  bottom: calc(var(--nav-h) + var(--sp-2));
+  background: var(--bg);
+  padding-top: 2px;
+}
+.coach-text-input {
+  flex: 1 1 auto;
+  margin-top: 0;
+}
+.coach-send-btn { flex: none; background: var(--accent); color: var(--accent-on); border-color: var(--accent); }
+.coach-send-btn:disabled { opacity: 0.5; }
+.coach-reset-btn { align-self: center; }
 
 .typing-dots { display: flex; gap: 5px; padding: 4px 0; }
 .typing-dots span {

@@ -1,4 +1,4 @@
-import { PROGRAM, DAY_ORDER, DAY_LABELS, nextDayType } from "./program.js?v=20260626e";
+import { PROGRAM, DAY_ORDER, DAY_LABELS, nextDayType } from "./program.js?v=20260627a";
 import {
   getSettings,
   saveSettings,
@@ -7,17 +7,18 @@ import {
   getLastSessionForDayType,
   getExerciseHistory,
   listAllExerciseNames,
-} from "./storage.js?v=20260626e";
-import { loadWhoopData, latestRecovery, latestSleep, latestCycle, recentWorkouts } from "./whoop.js?v=20260626e";
-import { recoveryRingSVG, strainGaugeSVG, sleepBreakdownHTML } from "./widgets.js?v=20260626e";
-import { buildCoachingPrompt, askCoach } from "./coach.js?v=20260626e";
-import { icon, icons } from "./icons.js?v=20260626e";
+} from "./storage.js?v=20260627a";
+import { loadWhoopData, latestRecovery, latestSleep, latestCycle, recentWorkouts } from "./whoop.js?v=20260627a";
+import { recoveryRingSVG, strainGaugeSVG, sleepBreakdownHTML } from "./widgets.js?v=20260627a";
+import { buildCoachingContext, askCoach } from "./coach.js?v=20260627a";
+import { icon, icons } from "./icons.js?v=20260627a";
 
 const state = {
   whoopData: null,
   whoopError: null,
   todayDayType: null,
   progressExercise: null,
+  coachApiMessages: [], // full conversation sent to the API, role/content pairs
 };
 
 const $ = (sel, root = document) => root.querySelector(sel);
@@ -317,6 +318,68 @@ function updatePlanProgress(root) {
   if (count) count.textContent = `${done}/${blocks.length} exercises logged`;
 }
 
+function renderExerciseBlock(ex, i, last, { nested = false } = {}) {
+  const lastEx = last?.exercises?.find((e) => e.name === ex.name);
+  const lastStr = lastEx?.sets?.length
+    ? lastEx.sets.map((s) => `${s.weight_kg ?? "--"}kg×${s.reps ?? "--"}`).join(", ")
+    : null;
+
+  const setRows = Array.from({ length: ex.sets })
+    .map((_, si) => {
+      const prevSet = lastEx?.sets?.[si];
+      return `
+      <div class="set-row" data-ex="${i}" data-set="${si}">
+        <span class="set-num">${si + 1}</span>
+        <input type="number" inputmode="decimal" placeholder="${prevSet?.weight_kg ?? "kg"}" class="weight-input" />
+        <span class="x">×</span>
+        <input type="number" inputmode="numeric" placeholder="${prevSet?.reps ?? "reps"}" class="reps-input" />
+        <span class="set-status">${icon("check")}</span>
+      </div>`;
+    })
+    .join("");
+
+  return `
+    <div class="exercise-block${nested ? " nested" : ""}" data-exercise-name="${escapeAttr(ex.name)}" data-ex-index="${i}">
+      <div class="exercise-head">
+        <div>
+          <div class="exercise-name">${escapeHtml(ex.name)}</div>
+          <div class="exercise-meta">
+            <span class="type-tag ${ex.type}">${ex.type}</span>
+            <span class="muted small">target ${ex.reps} reps</span>
+          </div>
+        </div>
+        <span class="exercise-done-badge hidden">${icon("check")}</span>
+      </div>
+      <div class="muted small last-time">
+        ${lastStr ? `Last time: ${escapeHtml(lastStr)}` : "First time logging this"}
+        ${lastStr ? `<button type="button" class="chip repeat-last-btn" data-ex-index="${i}" style="margin-left:6px;padding:3px 10px;font-size:11px;">${icon("refresh")} Repeat</button>` : ""}
+      </div>
+      <div class="sets">${setRows}</div>
+    </div>`;
+}
+
+function buildExerciseListHtml(plan, last) {
+  const out = [];
+  let i = 0;
+  while (i < plan.exercises.length) {
+    const ex = plan.exercises[i];
+    const next = plan.exercises[i + 1];
+    if (ex.supersetGroup && next && next.supersetGroup === ex.supersetGroup) {
+      out.push(`
+        <div class="superset-wrap">
+          <div class="superset-label">${icon("refresh")} Superset</div>
+          ${renderExerciseBlock(ex, i, last, { nested: true })}
+          ${renderExerciseBlock(next, i + 1, last, { nested: true })}
+        </div>`);
+      i += 2;
+    } else {
+      out.push(renderExerciseBlock(ex, i, last));
+      i += 1;
+    }
+  }
+  return out.join("");
+}
+
 function renderToday() {
   const root = $("#tab-today");
   if (!root) return;
@@ -326,52 +389,37 @@ function renderToday() {
   const dayType = state.todayDayType;
   const plan = PROGRAM[dayType];
   const last = getLastSessionForDayType(dayType);
+  const isRest = plan.exercises.length === 0;
 
   const dayPillsHtml = DAY_ORDER.map(
     (d) => `<button type="button" class="day-pill${d === dayType ? " active" : ""}" data-day="${d}">${DAY_LABELS[d]}</button>`
   ).join("");
 
-  const exerciseRows = plan.exercises
-    .map((ex, i) => {
-      const lastEx = last?.exercises?.find((e) => e.name === ex.name);
-      const lastStr = lastEx?.sets?.length
-        ? lastEx.sets.map((s) => `${s.weight_kg ?? "--"}kg×${s.reps ?? "--"}`).join(", ")
-        : null;
+  if (isRest) {
+    root.innerHTML = `
+      <div class="screen-head">
+        <div>
+          <div class="greeting">${escapeHtml(plan.label)}</div>
+          <div class="date-line">${escapeHtml(plan.focus)}</div>
+        </div>
+      </div>
+      <div class="day-pills">${dayPillsHtml}</div>
+      ${emptyState({
+        iconName: "moon",
+        title: "Rest day",
+        sub: "No session scheduled today. Recover up — or pick another day above if you want to log a make-up session.",
+      })}
+    `;
+    $$(".day-pill", root).forEach((btn) =>
+      btn.addEventListener("click", () => {
+        state.todayDayType = btn.dataset.day;
+        renderToday();
+      })
+    );
+    return;
+  }
 
-      const setRows = Array.from({ length: ex.sets })
-        .map((_, si) => {
-          const prevSet = lastEx?.sets?.[si];
-          return `
-          <div class="set-row" data-ex="${i}" data-set="${si}">
-            <span class="set-num">${si + 1}</span>
-            <input type="number" inputmode="decimal" placeholder="${prevSet?.weight_kg ?? "kg"}" class="weight-input" />
-            <span class="x">×</span>
-            <input type="number" inputmode="numeric" placeholder="${prevSet?.reps ?? "reps"}" class="reps-input" />
-            <span class="set-status">${icon("check")}</span>
-          </div>`;
-        })
-        .join("");
-
-      return `
-        <div class="exercise-block" data-exercise-name="${escapeAttr(ex.name)}" data-ex-index="${i}">
-          <div class="exercise-head">
-            <div>
-              <div class="exercise-name">${escapeHtml(ex.name)}</div>
-              <div class="exercise-meta">
-                <span class="type-tag ${ex.type}">${ex.type}</span>
-                <span class="muted small">target ${ex.reps} reps</span>
-              </div>
-            </div>
-            <span class="exercise-done-badge hidden">${icon("check")}</span>
-          </div>
-          <div class="muted small last-time">
-            ${lastStr ? `Last time: ${escapeHtml(lastStr)}` : "First time logging this"}
-            ${lastStr ? `<button type="button" class="chip repeat-last-btn" data-ex-index="${i}" style="margin-left:6px;padding:3px 10px;font-size:11px;">${icon("refresh")} Repeat</button>` : ""}
-          </div>
-          <div class="sets">${setRows}</div>
-        </div>`;
-    })
-    .join("");
+  const exerciseRows = buildExerciseListHtml(plan, last);
 
   root.innerHTML = `
     <div class="screen-head">
@@ -574,6 +622,28 @@ function renderCoachMarkdown(text) {
   return escapeHtml(text).replace(/\*\*(.+?)\*\*/g, "<strong>$1</strong>");
 }
 
+function timeNow() {
+  return new Date().toLocaleTimeString([], { hour: "numeric", minute: "2-digit" });
+}
+
+function appendBubble(thread, { role, html, id }) {
+  const div = document.createElement("div");
+  div.className = `bubble ${role}`;
+  if (id) div.id = id;
+  div.innerHTML = html;
+  thread.appendChild(div);
+  if (typeof div.scrollIntoView === "function") {
+    div.scrollIntoView({ behavior: "smooth", block: "end" });
+  }
+  return div;
+}
+
+function typingBubbleHtml() {
+  return `
+    <div class="bubble-meta">${icon("sparkle")} Coach is thinking</div>
+    <div class="typing-dots"><span></span><span></span><span></span></div>`;
+}
+
 function renderCoach() {
   const root = $("#tab-coach");
   if (!root) return;
@@ -581,54 +651,114 @@ function renderCoach() {
     <div class="screen-head">
       <div>
         <div class="greeting">Coach</div>
-        <div class="date-line">Personalized readiness &amp; guidance</div>
+        <div class="date-line">A real conversation, not a report</div>
       </div>
     </div>
-    <div class="card coach-card">
-      <div class="card-title">${icon("sparkle")} Ask Your Coach</div>
-      <p class="muted small">Builds a prompt from your latest WHOOP data, today's planned session, and recent logged workouts, then asks Claude.</p>
-      <button type="button" id="ask-coach-btn" class="primary-btn">${icon("coach")} Get Today's Coaching</button>
+    <div class="card coach-card" id="coach-intro">
+      <div class="card-title">${icon("sparkle")} Talk to Your Coach</div>
+      <p class="muted small">Your coach starts with your latest WHOOP data, today's planned session, and recent logged workouts — then it's a back-and-forth. Tell it how you're feeling, what's changed, or just ask a question.</p>
+      <button type="button" id="start-coach-btn" class="primary-btn">${icon("coach")} Start Conversation</button>
     </div>
-    <div id="coach-output" class="coach-output"></div>
+    <div class="coach-shell hidden" id="coach-shell">
+      <div class="coach-thread" id="coach-thread"></div>
+      <form id="coach-form" class="coach-input-row">
+        <input type="text" id="coach-input" class="coach-text-input" placeholder="Reply to your coach…" autocomplete="off" />
+        <button type="submit" class="icon-btn coach-send-btn" aria-label="Send">${icon("chevronRight")}</button>
+      </form>
+      <button type="button" id="coach-reset-btn" class="chip coach-reset-btn">${icon("refresh")} New conversation</button>
+    </div>
   `;
-  $("#ask-coach-btn").addEventListener("click", runCoach);
+  $("#start-coach-btn", root).addEventListener("click", startCoachConversation);
+  $("#coach-form", root).addEventListener("submit", (e) => {
+    e.preventDefault();
+    sendCoachMessage();
+  });
+  $("#coach-reset-btn", root).addEventListener("click", resetCoachConversation);
 }
 
-async function runCoach() {
-  const out = $("#coach-output");
-  const btn = $("#ask-coach-btn");
+async function startCoachConversation() {
   const { anthropicApiKey } = getSettings();
   if (!anthropicApiKey) {
     showToast("Add your Anthropic API key in Settings first", "bad");
     return;
   }
-  btn.disabled = true;
-  out.innerHTML = `
-    <div class="bubble">
-      <div class="bubble-meta">${icon("sparkle")} Claude is thinking</div>
-      <div class="typing-dots"><span></span><span></span><span></span></div>
-    </div>`;
+  const intro = $("#coach-intro");
+  const shell = $("#coach-shell");
+  const thread = $("#coach-thread");
+  intro.classList.add("hidden");
+  shell.classList.remove("hidden");
+  appendBubble(thread, { role: "assistant", html: typingBubbleHtml(), id: "coach-typing" });
+
   try {
     const data = state.whoopData || (await ensureWhoopData());
     const todayDayType = state.todayDayType || nextDayType(getWorkouts());
-    const prompt = buildCoachingPrompt({ whoopData: data, todayDayType });
-    const reply = await askCoach({ apiKey: anthropicApiKey, prompt });
-    const time = new Date().toLocaleTimeString([], { hour: "numeric", minute: "2-digit" });
-    out.innerHTML = `
-      <div class="bubble">
-        <div class="bubble-meta">${icon("sparkle")} Claude · ${time}</div>
-        <div class="bubble-text">${renderCoachMarkdown(reply)}</div>
-      </div>`;
+    const context = buildCoachingContext({ whoopData: data, todayDayType });
+    state.coachApiMessages = [{ role: "user", content: context }];
+    const reply = await askCoach({ apiKey: anthropicApiKey, messages: state.coachApiMessages });
+    state.coachApiMessages.push({ role: "assistant", content: reply });
+    $("#coach-typing")?.remove();
+    appendBubble(thread, {
+      role: "assistant",
+      html: `<div class="bubble-meta">${icon("sparkle")} Coach · ${timeNow()}</div><div class="bubble-text">${renderCoachMarkdown(reply)}</div>`,
+    });
+    $("#coach-input")?.focus();
   } catch (err) {
-    out.innerHTML = `
-      <div class="bubble">
-        <div class="bubble-meta">${icon("alert")} Error</div>
-        <div class="bubble-text error">${escapeHtml(err.message)}</div>
-      </div>`;
+    $("#coach-typing")?.remove();
+    appendBubble(thread, {
+      role: "assistant",
+      html: `<div class="bubble-meta">${icon("alert")} Error</div><div class="bubble-text error">${escapeHtml(err.message)}</div>`,
+    });
+    showToast("Coach request failed", "bad");
+    intro.classList.remove("hidden");
+  }
+}
+
+async function sendCoachMessage() {
+  const input = $("#coach-input");
+  const sendBtn = $(".coach-send-btn");
+  const thread = $("#coach-thread");
+  const text = input.value.trim();
+  if (!text) return;
+
+  appendBubble(thread, {
+    role: "user",
+    html: `<div class="bubble-text">${escapeHtml(text)}</div>`,
+  });
+  state.coachApiMessages.push({ role: "user", content: text });
+  input.value = "";
+  input.disabled = true;
+  sendBtn.disabled = true;
+  appendBubble(thread, { role: "assistant", html: typingBubbleHtml(), id: "coach-typing" });
+
+  try {
+    const { anthropicApiKey } = getSettings();
+    const reply = await askCoach({ apiKey: anthropicApiKey, messages: state.coachApiMessages });
+    state.coachApiMessages.push({ role: "assistant", content: reply });
+    $("#coach-typing")?.remove();
+    appendBubble(thread, {
+      role: "assistant",
+      html: `<div class="bubble-meta">${icon("sparkle")} Coach · ${timeNow()}</div><div class="bubble-text">${renderCoachMarkdown(reply)}</div>`,
+    });
+  } catch (err) {
+    state.coachApiMessages.pop(); // drop the unanswered user turn so retrying resends cleanly
+    $("#coach-typing")?.remove();
+    appendBubble(thread, {
+      role: "assistant",
+      html: `<div class="bubble-meta">${icon("alert")} Error</div><div class="bubble-text error">${escapeHtml(err.message)}</div>`,
+    });
     showToast("Coach request failed", "bad");
   } finally {
-    btn.disabled = false;
+    input.disabled = false;
+    sendBtn.disabled = false;
+    input.focus();
   }
+}
+
+function resetCoachConversation() {
+  state.coachApiMessages = [];
+  $("#coach-thread").innerHTML = "";
+  $("#coach-shell").classList.add("hidden");
+  $("#coach-intro").classList.remove("hidden");
 }
 
 // ---------------------------------------------------------------- Settings

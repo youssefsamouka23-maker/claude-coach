@@ -1,84 +1,139 @@
 // js/program.js
-// 5-day Push/Pull/Legs hypertrophy split. No barbell bench (dumbbell only).
-// Compounds: 4-6 reps. Accessories: 8-15 reps.
+// 6-day hypertrophy split, fixed to the calendar (Mon-Sun), Thursday off.
+// Compounds: 6-10 reps. Accessories: 10-15 reps.
+// `supersetGroup` links paired exercises (e.g. left/right unilateral work,
+// or two movements meant to be performed back-to-back) so the UI can show
+// them visually grouped.
 
-export const DAY_ORDER = ["push_a", "pull_a", "legs", "push_b", "pull_b"];
+export const DAY_ORDER = ["push_1", "pull_1", "legs_1", "rest", "push_2", "pull_2", "legs_2"];
 
 export const DAY_LABELS = {
-  push_a: "Push A",
-  pull_a: "Pull A",
-  legs: "Legs",
-  push_b: "Push B",
-  pull_b: "Pull B",
+  push_1: "Push 1",
+  pull_1: "Pull 1",
+  legs_1: "Legs 1",
+  rest: "Rest",
+  push_2: "Push 2",
+  pull_2: "Pull 2",
+  legs_2: "Legs 2",
 };
+
+// Maps JS Date#getDay() (0=Sun..6=Sat) to a day_type key.
+const WEEKDAY_TO_DAY_TYPE = {
+  1: "push_1", // Mon
+  2: "pull_1", // Tue
+  3: "legs_1", // Wed
+  4: "rest", // Thu
+  5: "push_2", // Fri
+  6: "pull_2", // Sat
+  0: "legs_2", // Sun
+};
+
+const C = "6-10"; // compound rep target
+const A = "10-15"; // accessory rep target
 
 export const PROGRAM = {
-  push_a: {
-    label: "Push A",
-    focus: "Chest / Shoulders / Triceps",
+  push_1: {
+    label: "Push 1",
+    focus: "Hypertrophy — Chest / Shoulders / Triceps",
     exercises: [
-      { name: "Dumbbell Bench Press", type: "compound", sets: 4, reps: "4-6" },
-      { name: "Seated Dumbbell Shoulder Press", type: "compound", sets: 3, reps: "4-6" },
-      { name: "Weighted Dips", type: "compound", sets: 3, reps: "6-8" },
-      { name: "Cable Lateral Raise", type: "accessory", sets: 3, reps: "10-15" },
-      { name: "Cable Fly (high-to-low)", type: "accessory", sets: 3, reps: "10-15" },
-      { name: "Overhead Triceps Extension", type: "accessory", sets: 3, reps: "8-12" },
+      { name: "Bench Press - Dumbbell", type: "compound", sets: 4, reps: C },
+      { name: "Overhead Press - Seated - Dumbbell", type: "compound", sets: 3, reps: C },
+      { name: "Smith Machine Incline Bench Press", type: "compound", sets: 3, reps: C },
+      { name: "Machine Chest Flys", type: "accessory", sets: 3, reps: A },
+      { name: "Cable Lateral Raise - L", type: "accessory", sets: 3, reps: A, supersetGroup: "lat_raise_1" },
+      { name: "Cable Lateral Raise - R", type: "accessory", sets: 3, reps: A, supersetGroup: "lat_raise_1" },
+      { name: "Rear Delt Fly - Machine", type: "accessory", sets: 3, reps: A },
+      { name: "Triceps Pulldown - Rope", type: "accessory", sets: 3, reps: A },
+      { name: "Tricep Extension - Supine Lying - Dumbbell", type: "accessory", sets: 3, reps: A },
     ],
   },
-  pull_a: {
-    label: "Pull A",
-    focus: "Back Width / Biceps",
+  pull_1: {
+    label: "Pull 1",
+    focus: "Hypertrophy — Back / Biceps",
     exercises: [
-      { name: "Weighted Pull-Ups", type: "compound", sets: 4, reps: "4-6" },
-      { name: "Chest-Supported Dumbbell Row", type: "compound", sets: 3, reps: "4-6" },
-      { name: "Seated Cable Row", type: "compound", sets: 3, reps: "8-12" },
-      { name: "Face Pull", type: "accessory", sets: 3, reps: "12-15" },
-      { name: "Dumbbell Bicep Curl", type: "accessory", sets: 3, reps: "8-12" },
-      { name: "Hammer Curl", type: "accessory", sets: 2, reps: "10-15" },
+      { name: "Bent Over Row - Barbell", type: "compound", sets: 4, reps: C },
+      { name: "Lat Pull Down - Wide Grip Front Pull", type: "compound", sets: 4, reps: C },
+      { name: "Single Arm Bent Over Row - R - Cable", type: "compound", sets: 3, reps: C, supersetGroup: "row_1" },
+      { name: "Single Arm Bent Over Row - L - Cable", type: "compound", sets: 3, reps: C, supersetGroup: "row_1" },
+      { name: "Cable Face Pulls", type: "accessory", sets: 3, reps: A },
+      { name: "Preacher Curl", type: "accessory", sets: 3, reps: A },
+      { name: "Bicep Curl - Behind the Back - Cable - L", type: "accessory", sets: 3, reps: A, supersetGroup: "btb_curl_1" },
+      { name: "Bicep Curl - Behind the Back - Cable - R", type: "accessory", sets: 3, reps: A, supersetGroup: "btb_curl_1" },
+      { name: "Reverse Bicep Curl", type: "accessory", sets: 3, reps: A },
     ],
   },
-  legs: {
-    label: "Legs",
-    focus: "Quads / Hamstrings / Calves",
+  legs_1: {
+    label: "Legs 1",
+    focus: "Hypertrophy — Quads / Hamstrings / Calves / Core",
     exercises: [
-      { name: "Back Squat", type: "compound", sets: 4, reps: "4-6" },
-      { name: "Romanian Deadlift", type: "compound", sets: 3, reps: "4-6" },
-      { name: "Leg Press", type: "compound", sets: 3, reps: "8-12" },
-      { name: "Seated Leg Curl", type: "accessory", sets: 3, reps: "10-15" },
-      { name: "Leg Extension", type: "accessory", sets: 3, reps: "10-15" },
-      { name: "Standing Calf Raise", type: "accessory", sets: 4, reps: "10-15" },
+      { name: "Back Squat - Barbell", type: "compound", sets: 4, reps: C },
+      { name: "Leg Press - Machine", type: "compound", sets: 3, reps: C },
+      { name: "Romanian Deadlift - Barbell", type: "compound", sets: 3, reps: C },
+      { name: "Split Squat - Rear Foot Elevated - L - Dumbbell", type: "compound", sets: 3, reps: C, supersetGroup: "split_squat_1" },
+      { name: "Split Squat - Rear Foot Elevated - R - Dumbbell", type: "compound", sets: 3, reps: C, supersetGroup: "split_squat_1" },
+      { name: "Seated Machine Leg Curl", type: "accessory", sets: 3, reps: A },
+      { name: "Calf Raise - Standing", type: "accessory", sets: 4, reps: A },
+      { name: "Cable Crunch", type: "accessory", sets: 3, reps: A },
+      { name: "Hanging Leg Raise", type: "accessory", sets: 3, reps: A },
     ],
   },
-  push_b: {
-    label: "Push B",
-    focus: "Shoulders / Chest / Triceps",
+  rest: {
+    label: "Rest",
+    focus: "Recovery day",
+    exercises: [],
+  },
+  push_2: {
+    label: "Push 2",
+    focus: "Hypertrophy — Chest / Shoulders / Triceps",
     exercises: [
-      { name: "Dumbbell Incline Press", type: "compound", sets: 4, reps: "4-6" },
-      { name: "Machine Shoulder Press", type: "compound", sets: 3, reps: "6-8" },
-      { name: "Close-Grip Dumbbell Floor Press", type: "compound", sets: 3, reps: "6-8" },
-      { name: "Dumbbell Lateral Raise", type: "accessory", sets: 3, reps: "10-15" },
-      { name: "Pec Deck / Cable Crossover", type: "accessory", sets: 3, reps: "10-15" },
-      { name: "Triceps Pushdown", type: "accessory", sets: 3, reps: "10-15" },
+      { name: "Bench Press - Incline - Dumbbell", type: "compound", sets: 4, reps: C },
+      { name: "Shoulder Press - Machine", type: "compound", sets: 4, reps: C },
+      { name: "Standing Cable Crossover", type: "accessory", sets: 4, reps: A },
+      { name: "Low Cable Fly", type: "accessory", sets: 3, reps: A },
+      { name: "Cable Lateral Raise - L", type: "accessory", sets: 3, reps: A, supersetGroup: "lat_raise_2" },
+      { name: "Cable Lateral Raise - R", type: "accessory", sets: 3, reps: A, supersetGroup: "lat_raise_2" },
+      { name: "Rear Delt Fly - Machine", type: "accessory", sets: 3, reps: A },
+      { name: "Tricep Pushdown - V Bar", type: "accessory", sets: 3, reps: A },
+      { name: "Overhead Rope Extension", type: "accessory", sets: 3, reps: A },
     ],
   },
-  pull_b: {
-    label: "Pull B",
-    focus: "Back Thickness / Rear Delts / Biceps",
+  pull_2: {
+    label: "Pull 2",
+    focus: "Hypertrophy — Back / Biceps",
     exercises: [
-      { name: "Deadlift", type: "compound", sets: 3, reps: "4-6" },
-      { name: "Wide-Grip Lat Pulldown", type: "compound", sets: 3, reps: "6-8" },
-      { name: "Chest-Supported Dumbbell Row", type: "compound", sets: 3, reps: "8-12" },
-      { name: "Rear Delt Fly", type: "accessory", sets: 3, reps: "12-15" },
-      { name: "Cable Curl", type: "accessory", sets: 3, reps: "10-15" },
-      { name: "Shrugs", type: "accessory", sets: 2, reps: "10-15" },
+      { name: "Seated Row - Cable", type: "compound", sets: 4, reps: C },
+      { name: "Row - Single Arm - L - Dumbbell", type: "compound", sets: 3, reps: C, supersetGroup: "row_2" },
+      { name: "Row - Single Arm - R - Dumbbell", type: "compound", sets: 3, reps: C, supersetGroup: "row_2" },
+      { name: "Standing Row - Cable", type: "compound", sets: 3, reps: C },
+      { name: "Cable Face Pulls", type: "accessory", sets: 3, reps: A },
+      { name: "Preacher Curl", type: "accessory", sets: 3, reps: A },
+      { name: "Bicep Curl - Cable", type: "accessory", sets: 3, reps: A },
+      { name: "Bicep Curl - Behind the Back - Cable - L", type: "accessory", sets: 3, reps: A, supersetGroup: "btb_curl_2" },
+      { name: "Bicep Curl - Behind the Back - Cable - R", type: "accessory", sets: 3, reps: A, supersetGroup: "btb_curl_2" },
+      { name: "Hammer Curl - Dumbbell", type: "accessory", sets: 3, reps: A },
+    ],
+  },
+  legs_2: {
+    label: "Legs 2",
+    focus: "Hypertrophy — Quads / Hamstrings / Glutes / Core",
+    exercises: [
+      { name: "Hack Squat - Machine", type: "compound", sets: 4, reps: C },
+      { name: "Romanian Deadlift - Dumbbell", type: "compound", sets: 3, reps: C },
+      { name: "Lying Leg Curl - Machine", type: "accessory", sets: 3, reps: A },
+      { name: "Split Squat - Rear Foot Elevated - L - Dumbbell", type: "compound", sets: 3, reps: C, supersetGroup: "split_squat_2" },
+      { name: "Split Squat - Rear Foot Elevated - R - Dumbbell", type: "compound", sets: 3, reps: C, supersetGroup: "split_squat_2" },
+      { name: "Hip Thrust - Barbell", type: "compound", sets: 3, reps: C },
+      { name: "Seated Calf Raise", type: "accessory", sets: 4, reps: A },
+      { name: "Cable Crunch", type: "accessory", sets: 3, reps: A },
+      { name: "Hanging Leg Raise", type: "accessory", sets: 3, reps: A },
     ],
   },
 };
 
+// Picks today's session by actual weekday. `history` is accepted for
+// backward-compatibility but no longer drives rotation — the plan is now
+// pinned to specific days of the week (Thursday = rest).
 export function nextDayType(history) {
-  if (!history || history.length === 0) return DAY_ORDER[0];
-  const last = history[history.length - 1];
-  const idx = DAY_ORDER.indexOf(last.day_type);
-  if (idx === -1) return DAY_ORDER[0];
-  return DAY_ORDER[(idx + 1) % DAY_ORDER.length];
+  const weekday = new Date().getDay();
+  return WEEKDAY_TO_DAY_TYPE[weekday] || DAY_ORDER[0];
 }
